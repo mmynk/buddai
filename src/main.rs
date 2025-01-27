@@ -11,7 +11,7 @@ pub mod gemini;
 #[command(version, about, long_about = None)]
 struct Args {
     /// Query to ask BuddAI
-    #[arg(short, long)]
+    #[arg(index = 1)]
     query: String,
     /// AI to ask
     #[arg(short, long, default_value = "gemini")]
