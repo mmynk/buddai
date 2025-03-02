@@ -1,4 +1,7 @@
 use clap::Parser;
+use fern::colors::{Color, ColoredLevelConfig};
+use log::{error, info};
+use std::{future, str::FromStr};
 
 pub mod curl;
 pub mod deepseek;
@@ -37,14 +40,36 @@ async fn main() {
     match ai.as_str() {
         "deepseek" => answer::<deepseek::Deepseek>(&query).await,
         "gemini" => answer::<gemini::Gemini>(&query).await,
-        _ => println!("Unknown AI: {}", ai),
+        _ => error!("Unknown AI: {}", ai),
     }
 }
 
 async fn answer<T: Ask>(query: &str) {
     let response = T::ask(query).await;
     match response {
-        Ok(answer) => println!("{} says: {}", T::name(), answer),
-        Err(e) => println!("{} failed: {}", T::name(), e.message),
+        Ok(answer) => info!("{} says: {}", T::name(), answer),
+        Err(e) => error!("{} failed: {}", T::name(), e.message),
     }
+}
+
+fn setup_logger() -> Result<(), fern::InitError> {
+    let colors = ColoredLevelConfig::new()
+        .debug(Color::White)
+        .info(Color::Green)
+        .warn(Color::Yellow)
+        .error(Color::Red);
+
+    let log_level = std::env::var("LOG_LEVEL").unwrap_or("info".to_string());
+    fern::Dispatch::new()
+        .format(move|out, message, record| {
+            out.finish(format_args!(
+                "[{}] {}",
+                colors.color(record.level()),
+                message
+            ))
+        })
+        .level(log::LevelFilter::from_str(&log_level).unwrap())
+        .chain(std::io::stdout())
+        .apply()?;
+    Ok(())
 }

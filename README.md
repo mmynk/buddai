@@ -22,15 +22,15 @@ Supported LLMs:
 # Export API key for the LLM you want to use
 export GOOGLE_API_KEY=your_google_api_key
 export DEEPSEEK_API_KEY=your_deepseek_api_key
-``` 
+```
 
 ## Usage
 
 ```sh
 $ buddai 'Linux cmd to find some text in all files and folders in a directory'
-Gemini says: `grep -r "text" directory`
+[INFO] Gemini says: `grep -r "text" directory`
 
 # Using DeepSeek
 $ buddai -a deepseek 'delete everything in a dir'
-DeepSeek says: `rm -rf /path/to/dir/*`
+[INFO] DeepSeek says: `rm -rf /path/to/dir/*`
 ```
