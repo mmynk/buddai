@@ -1,8 +1,8 @@
 use clap::Parser;
-use std::{fs, future};
 
 pub mod curl;
 pub mod deepseek;
+pub mod env;
 pub mod error;
 pub mod gemini;
 
@@ -18,32 +18,17 @@ struct Args {
     ai: String,
 }
 
-fn load_env() {
-    let env_vars = fs::read_to_string(".env");
-    if env_vars.is_err() {
-        println!("No .env file found");
-        return;
-    }
-    let envs = env_vars.unwrap();
-    for line in envs.lines() {
-        let parts: Vec<&str> = line.split('=').collect();
-        if parts.len() != 2 {
-            continue;
-        }
-        let key = parts[0];
-        let value = parts[1];
-        std::env::set_var(key, value);
-    }
-}
-
 pub trait Ask {
     fn name() -> &'static str;
     fn ask(query: &str) -> impl future::Future<Output = Result<String, error::Error>>;
+    fn error_message(key: &str) -> String {
+        return format!("{} not found in environment variables. Either export it or add it to ${{HOME}}/.config/buddai.env.", key);
+    }
 }
 
 #[tokio::main]
 async fn main() {
-    load_env();
+    env::load_env();
 
     let args = Args::parse();
     let query = args.query;
