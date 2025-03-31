@@ -2,8 +2,8 @@ use crate::{curl, error::Error, Ask};
 use serde_json;
 
 const API_KEY: &str = "GOOGLE_API_KEY";
-const GEMINI_URL: &str =
-    "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent";
+const GEMINI_MODEL: &str = "GEMINI_MODEL";
+const DEFAULT_MODEL: &str = "gemini-2.0-flash";
 
 pub struct Gemini;
 
@@ -13,9 +13,8 @@ impl Ask for Gemini {
     }
 
     async fn ask(query: &str) -> Result<String, Error> {
-        let api_key = std::env::var(API_KEY)
-            .map_err(|_| Error::new(Self::error_message(API_KEY).as_str()))?;
-        let url = format!("{}?key={}", GEMINI_URL, api_key);
+        let api_key = Self::get_api_key(API_KEY)?;
+        let url = get_url(&api_key)?;
 
         let mut headers = reqwest::header::HeaderMap::new();
         headers.insert("Content-Type", "application/json".parse().unwrap());
@@ -37,4 +36,12 @@ impl Ask for Gemini {
             .to_string();
         return Ok(answer);
     }
+}
+
+fn get_url(api_key: &str) -> Result<String, Error> {
+    let model = std::env::var(GEMINI_MODEL)
+        .unwrap_or_else(|_| DEFAULT_MODEL.to_string());
+    Ok(format!(
+        "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key}"
+    ))
 }

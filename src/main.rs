@@ -25,13 +25,19 @@ pub trait Ask {
     fn name() -> &'static str;
     fn ask(query: &str) -> impl future::Future<Output = Result<String, error::Error>>;
     fn error_message(key: &str) -> String {
-        return format!("{} not found in environment variables. Either export it or add it to ${{HOME}}/.config/buddai.env.", key);
+        format!("{} not found in environment variables. Either export it or add it to ${{HOME}}/.config/buddai.env.", key)
+    }
+    fn get_api_key(env_key: &str) -> Result<String, error::Error> {
+        std::env::var(env_key)
+            .map_err(|_| error::Error::new(Self::error_message(env_key).as_str()))
     }
 }
 
 #[tokio::main]
 async fn main() {
     env::load_env();
+    setup_logger()
+        .expect("Failed to setup logger");
 
     let args = Args::parse();
     let query = args.query;

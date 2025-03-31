@@ -12,8 +12,7 @@ impl Ask for Deepseek {
     }
 
     async fn ask(query: &str) -> Result<String, Error> {
-        let api_key = std::env::var(API_KEY)
-            .map_err(|_| Error::new(Self::error_message(API_KEY).as_str()))?;
+        let api_key = Self::get_api_key(API_KEY)?;
 
         let mut headers = reqwest::header::HeaderMap::new();
         headers.insert("Content-Type", "application/json".parse().unwrap());
