@@ -3,6 +3,7 @@ use fern::colors::{Color, ColoredLevelConfig};
 use log::{error, info};
 use std::{future, str::FromStr};
 
+pub mod bedrock;
 pub mod curl;
 pub mod deepseek;
 pub mod env;
@@ -17,7 +18,7 @@ struct Args {
     #[arg(index = 1)]
     query: String,
     /// AI to ask
-    #[arg(short, long, default_value = "gemini")]
+    #[arg(short, long, default_value = "bedrock")]
     ai: String,
 }
 
@@ -28,16 +29,14 @@ pub trait Ask {
         format!("{} not found in environment variables. Either export it or add it to ${{HOME}}/.config/buddai.env.", key)
     }
     fn get_api_key(env_key: &str) -> Result<String, error::Error> {
-        std::env::var(env_key)
-            .map_err(|_| error::Error::new(Self::error_message(env_key).as_str()))
+        std::env::var(env_key).map_err(|_| error::Error::new(Self::error_message(env_key).as_str()))
     }
 }
 
 #[tokio::main]
 async fn main() {
     env::load_env();
-    setup_logger()
-        .expect("Failed to setup logger");
+    setup_logger().expect("Failed to setup logger");
 
     let args = Args::parse();
     let query = args.query;
@@ -46,6 +45,7 @@ async fn main() {
     match ai.as_str() {
         "deepseek" => answer::<deepseek::Deepseek>(&query).await,
         "gemini" => answer::<gemini::Gemini>(&query).await,
+        "bedrock" => answer::<bedrock::Bedrock>(&query).await,
         _ => error!("Unknown AI: {}", ai),
     }
 }
@@ -67,7 +67,7 @@ fn setup_logger() -> Result<(), fern::InitError> {
 
     let log_level = std::env::var("LOG_LEVEL").unwrap_or("info".to_string());
     fern::Dispatch::new()
-        .format(move|out, message, record| {
+        .format(move |out, message, record| {
             out.finish(format_args!(
                 "[{}] {}",
                 colors.color(record.level()),
